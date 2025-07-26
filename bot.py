@@ -618,11 +618,21 @@ class CategoryCommandView(ui.View):
 
 class HelpCategorySelect(ui.Select):
     def __init__(self, bot, ctx, categories):
-        options = [discord.SelectOption(label=cat, value=cat) for cat in categories]
+        # Filter out empty or invalid categories and ensure proper formatting
+        valid_categories = []
+        for cat in categories:
+            if cat and len(cat) <= 25:  # Discord limit for select option labels
+                valid_categories.append(cat)
+        
+        # If no valid categories, create a default one
+        if not valid_categories:
+            valid_categories = ["General"]
+        
+        options = [discord.SelectOption(label=cat, value=cat) for cat in valid_categories]
         super().__init__(placeholder="Choose a command category...", min_values=1, max_values=1, options=options)
         self.bot = bot
         self.ctx = ctx
-        self.categories = categories
+        self.categories = valid_categories
 
     async def callback(self, interaction: discord.Interaction):
         category = self.values[0]
@@ -663,12 +673,15 @@ class HelpCog(commands.Cog):
         # Define your categories (could be dynamic or static)
         categories = sorted(set(cmd.cog_name or "Other" for cmd in self.bot.commands if not cmd.hidden))
         
+        # Filter out empty categories
+        valid_categories = [cat for cat in categories if cat and cat.strip()]
+        
         # Create category list
         category_list = []
-        for category in categories:
+        for category in valid_categories:
             category_list.append(f"`{category}`")
         
-        category_text = ", ".join(category_list)
+        category_text = ", ".join(category_list) if category_list else "General"
         
         embed = discord.Embed(
             title="✨ Nexus Elite Bot Help",
@@ -690,7 +703,7 @@ class HelpCog(commands.Cog):
             text=f"Nexus Elite Bot • Requested by {ctx.author}",
             icon_url=ctx.author.avatar.url if ctx.author.avatar else None
         )
-        await ctx.send(embed=embed, view=HelpCategoryView(self.bot, ctx, categories))
+        await ctx.send(embed=embed, view=HelpCategoryView(self.bot, ctx, valid_categories))
 
 async def setup_help(bot):
     await bot.add_cog(HelpCog(bot))
