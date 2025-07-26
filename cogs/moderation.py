@@ -65,7 +65,7 @@ class Moderation(commands.Cog):
         self.automod_enabled = {}
         self.last_messages = {}
 
-    @commands.hybrid_command(description="Enable anti-spam automod for this server.")
+    @commands.command(description="Enable anti-spam automod for this server.")
     @commands.has_permissions(administrator=True)
     async def automodenable(self, ctx):
         self.automod_enabled[ctx.guild.id] = True
@@ -113,7 +113,7 @@ class Moderation(commands.Cog):
                 ctx=message
             ))
 
-    @commands.hybrid_command(description="Timeout a user for a given time and reason.")
+    @commands.command(description="Timeout a user for a given time and reason.")
     @commands.has_permissions(moderate_members=True)
     async def timeout(self, ctx, member: discord.Member, time: str = None, *, reason: str = "No reason provided"):
         if isinstance(ctx, commands.Context) and ctx.interaction:
@@ -155,7 +155,7 @@ class Moderation(commands.Cog):
         except Exception as e:
             await interaction.response.send_message(f"Failed to timeout {member.mention}: {e}", ephemeral=True)
 
-    @commands.hybrid_command(description="Ban a user from the server.")
+    @commands.command(description="Ban a user from the server.")
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx, member: discord.Member, *, reason: str = "No reason provided"):
         try:
@@ -164,7 +164,7 @@ class Moderation(commands.Cog):
         except Exception as e:
             await ctx.send(f"Failed to ban {member.mention}: {e}")
 
-    @commands.hybrid_command(description="Unban a user from the server.")
+    @commands.command(description="Unban a user from the server.")
     @commands.has_permissions(ban_members=True)
     async def unban(self, ctx, user: discord.User, *, reason: str = "No reason provided"):
         try:
@@ -173,7 +173,7 @@ class Moderation(commands.Cog):
         except Exception as e:
             await ctx.send(f"Failed to unban {user.mention}: {e}")
 
-    @commands.hybrid_command(description="Kick a user from the server.")
+    @commands.command(description="Kick a user from the server.")
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx, member: discord.Member, *, reason: str = "No reason provided"):
         try:
