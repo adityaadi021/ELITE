@@ -1,3 +1,6 @@
+# Import audioop compatibility first (for Python 3.13+)
+import audioop_compat
+
 import discord
 from discord.ext import commands
 import json
@@ -273,6 +276,9 @@ async def on_message(message):
         except Exception:
             pass
     # Load registration channel
+    
+    # Process commands
+    await bot.process_commands(message)
     async with aiosqlite.connect('database.db') as db:
         async with db.execute('SELECT value FROM bot_config WHERE key = ?', ('registration_channel',)) as cursor:
             reg_row = await cursor.fetchone()
