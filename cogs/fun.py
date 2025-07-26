@@ -35,7 +35,7 @@ class Fun(commands.Cog):
             ]
         }
 
-    @commands.hybrid_command(name="8ball", description="Ask the magic 8ball a question.")
+    @commands.command(name="8ball", description="Ask the magic 8ball a question.")
     async def eightball(self, ctx, *, question: str):
         responses = [
             "It is certain.", "It is decidedly so.", "Without a doubt.",
@@ -56,7 +56,7 @@ class Fun(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name="coinflip", description="Flip a coin.")
+    @commands.command(name="coinflip", description="Flip a coin.")
     async def coinflip(self, ctx):
         result = random.choice(["Heads", "Tails"])
         emoji = "🪙" if result == "Heads" else "🪙"
@@ -70,7 +70,7 @@ class Fun(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name="dice", description="Roll a dice.")
+    @commands.command(name="dice", description="Roll a dice.")
     async def dice(self, ctx, sides: int = 6):
         if sides < 2:
             await ctx.send(embed=modern_embed(
@@ -92,7 +92,7 @@ class Fun(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name="rps", description="Play rock, paper, scissors.")
+    @commands.command(name="rps", description="Play rock, paper, scissors.")
     async def rps(self, ctx, choice: str):
         choice = choice.lower()
         if choice not in ["rock", "paper", "scissors", "r", "p", "s"]:
