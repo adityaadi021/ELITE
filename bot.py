@@ -1,6 +1,3 @@
-# Import audioop compatibility first (for Python 3.13+)
-import audioop_compat
-
 import discord
 from discord.ext import commands
 import json
