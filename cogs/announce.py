@@ -136,66 +136,100 @@ class Announce(commands.Cog):
         self.bot = bot
 
     # Prefix command: announce
-    @commands.command(name="announce", description="Send an announcement as an embed.")
+    @commands.hybrid_command(name="announce", description="Send an announcement as an embed.")
     async def announce(self, ctx):
         if not await is_admin(ctx):
-            await ctx.send("❌ You do not have permission to use this command.", reference=ctx.message, mention_author=True)
+            if isinstance(ctx, discord.Interaction):
+                await ctx.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
+            else:
+                await ctx.send("❌ You do not have permission to use this command.", reference=ctx.message, mention_author=True)
             return
+        
         # List all text channels
         text_channels = [ch for ch in ctx.guild.text_channels if ch.permissions_for(ctx.author).send_messages]
         if not text_channels:
-            await ctx.send("❌ No channels available to announce in.", reference=ctx.message, mention_author=True)
+            if isinstance(ctx, discord.Interaction):
+                await ctx.response.send_message("❌ No channels available to announce in.", ephemeral=True)
+            else:
+                await ctx.send("❌ No channels available to announce in.", reference=ctx.message, mention_author=True)
             return
-        view = ChannelSelectView(ctx, text_channels)
-        msg = await ctx.send("Select a channel to send the announcement:", view=view)
-        await view.wait()
-        await msg.edit(view=None)
-        if not view.selected_channel:
-            await ctx.send("❌ No channel selected. Announcement cancelled.", reference=ctx.message, mention_author=True)
-            return
-        channel = ctx.guild.get_channel(view.selected_channel)
-        await ctx.send("Type the announcement text (or type 'skip' to leave blank):")
-        def check(m): return m.author == ctx.author and m.channel == ctx.channel
-        try:
-            text_msg = await self.bot.wait_for('message', check=check, timeout=120)
-            text_content = text_msg.content.strip().lower()
-            text = None if text_content == 'skip' else text_msg.content
-            await ctx.send("Upload an image or provide an image URL (or type 'skip' to leave blank):")
-            img_msg = await self.bot.wait_for('message', check=check, timeout=60)
-            image_url = None
-            if img_msg.attachments:
-                image_url = img_msg.attachments[0].url
-            elif img_msg.content and img_msg.content.strip().lower() == 'skip':
-                image_url = None
-            elif img_msg.content:
-                image_url = img_msg.content.strip()
-            await ctx.send("Do you want to @everyone or @here mention? (type 'everyone', 'here', or 'no'):")
-            mention_msg = await self.bot.wait_for('message', check=check, timeout=30)
-            mention_choice = mention_msg.content.strip().lower()
-            mention = ''
-            if mention_choice == 'everyone':
-                mention = '@everyone\n'
-            elif mention_choice == 'here':
-                mention = '@here\n'
-            # At least one of text or image_url must be present
-            if not (text or image_url):
-                await ctx.send("❌ You must provide at least text or an image.", reference=ctx.message, mention_author=True)
+        
+        if isinstance(ctx, discord.Interaction):
+            # Slash command - use modal
+            class ChannelDropdown(ui.Select):
+                def __init__(self, channels):
+                    options = [discord.SelectOption(label=ch.name, value=str(ch.id)) for ch in channels]
+                    super().__init__(placeholder="Select a channel...", options=options)
+                async def callback(self2, i: Interaction):
+                    await i.response.defer()
+                    self2.view.selected_channel = int(self2.values[0])
+                    self2.view.stop()
+            class ChannelDropdownView(ui.View):
+                def __init__(self, channels):
+                    super().__init__(timeout=60)
+                    self.selected_channel = None
+                    self.add_item(ChannelDropdown(channels))
+            view = ChannelDropdownView(text_channels)
+            await ctx.response.send_message("Select a channel to send the announcement:", view=view, ephemeral=True)
+            await view.wait()
+            if not view.selected_channel:
+                await ctx.followup.send("❌ No channel selected. Announcement cancelled.", ephemeral=True)
                 return
-            # Full-width embed: no title, just description and image
-            embed = modern_embed(
-                description=f"{mention}{text if text else ''}",
-                color=discord.Color.blurple(),
-                emoji="📢",
-                thumbnail=ctx.guild.icon.url if ctx.guild and ctx.guild.icon else None,
-                ctx=ctx
-            )
-            if image_url:
-                embed.set_image(url=image_url)
-            embed.set_footer(text="For support, contact the official server staff.")
-            await channel.send(embed=embed)
-            await ctx.send("✅ Announcement sent!", reference=ctx.message, mention_author=True)
-        except asyncio.TimeoutError:
-            await ctx.send("❌ Timed out. Announcement cancelled.", reference=ctx.message, mention_author=True)
+            channel_id = view.selected_channel
+            # Show modal for text and image URL
+            await ctx.followup.send_modal(AnnounceModal(self.bot, ctx, channel_id))
+        else:
+            # Prefix command - use interactive prompt
+            view = ChannelSelectView(ctx, text_channels)
+            msg = await ctx.send("Select a channel to send the announcement:", view=view)
+            await view.wait()
+            await msg.edit(view=None)
+            if not view.selected_channel:
+                await ctx.send("❌ No channel selected. Announcement cancelled.", reference=ctx.message, mention_author=True)
+                return
+            channel = ctx.guild.get_channel(view.selected_channel)
+            await ctx.send("Type the announcement text (or type 'skip' to leave blank):")
+            def check(m): return m.author == ctx.author and m.channel == ctx.channel
+            try:
+                text_msg = await self.bot.wait_for('message', check=check, timeout=120)
+                text_content = text_msg.content.strip().lower()
+                text = None if text_content == 'skip' else text_msg.content
+                await ctx.send("Upload an image or provide an image URL (or type 'skip' to leave blank):")
+                img_msg = await self.bot.wait_for('message', check=check, timeout=60)
+                image_url = None
+                if img_msg.attachments:
+                    image_url = img_msg.attachments[0].url
+                elif img_msg.content and img_msg.content.strip().lower() == 'skip':
+                    image_url = None
+                elif img_msg.content:
+                    image_url = img_msg.content.strip()
+                await ctx.send("Do you want to @everyone or @here mention? (type 'everyone', 'here', or 'no'):")
+                mention_msg = await self.bot.wait_for('message', check=check, timeout=30)
+                mention_choice = mention_msg.content.strip().lower()
+                mention = ''
+                if mention_choice == 'everyone':
+                    mention = '@everyone\n'
+                elif mention_choice == 'here':
+                    mention = '@here\n'
+                # At least one of text or image_url must be present
+                if not (text or image_url):
+                    await ctx.send("❌ You must provide at least text or an image.", reference=ctx.message, mention_author=True)
+                    return
+                # Full-width embed: no title, just description and image
+                embed = modern_embed(
+                    description=f"{mention}{text if text else ''}",
+                    color=discord.Color.blurple(),
+                    emoji="📢",
+                    thumbnail=ctx.guild.icon.url if ctx.guild and ctx.guild.icon else None,
+                    ctx=ctx
+                )
+                if image_url:
+                    embed.set_image(url=image_url)
+                embed.set_footer(text="For support, contact the official server staff.")
+                await channel.send(embed=embed)
+                await ctx.send("✅ Announcement sent!", reference=ctx.message, mention_author=True)
+            except asyncio.TimeoutError:
+                await ctx.send("❌ Timed out. Announcement cancelled.", reference=ctx.message, mention_author=True)
 
     # Slash command: announce
     @app_commands.command(name="announce", description="Send an announcement as an embed.")
