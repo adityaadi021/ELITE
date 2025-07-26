@@ -1,0 +1,11 @@
+# Discord Bot Configuration
+# Copy this file to .env and fill in your actual values
+
+# Your Discord Bot Token (get from Discord Developer Portal)
+TOKEN=your_discord_bot_token_here
+
+# Your Discord User ID (right-click your username and copy ID)
+OWNER_ID=your_discord_user_id_here
+
+# Optional: Server ID (your Discord server ID)
+GUILD_ID=1398674507992137880 
