@@ -231,44 +231,7 @@ class Announce(commands.Cog):
             except asyncio.TimeoutError:
                 await ctx.send("❌ Timed out. Announcement cancelled.", reference=ctx.message, mention_author=True)
 
-    # Slash command: announce
-    @app_commands.command(name="announce", description="Send an announcement as an embed.")
-    async def announce_slash(self, interaction: Interaction):
-        if not (interaction.user.id == interaction.guild.owner_id or interaction.user.guild_permissions.administrator):
-            # Check server-level bot owner
-            async with aiosqlite.connect('database.db') as db:
-                async with db.execute('SELECT user_id FROM server_owners WHERE guild_id = ? AND user_id = ?', (interaction.guild.id, interaction.user.id)) as cursor:
-                    if not await cursor.fetchone():
-                        await interaction.response.send_message("❌ You do not have permission to use this command.", ephemeral=True)
-                        return
-        # List all text channels
-        text_channels = [ch for ch in interaction.guild.text_channels if ch.permissions_for(interaction.user).send_messages]
-        if not text_channels:
-            await interaction.response.send_message("❌ No channels available to announce in.", ephemeral=True)
-            return
-        # Show dropdown for channel selection
-        class ChannelDropdown(ui.Select):
-            def __init__(self, channels):
-                options = [discord.SelectOption(label=ch.name, value=str(ch.id)) for ch in channels]
-                super().__init__(placeholder="Select a channel...", options=options)
-            async def callback(self2, i: Interaction):
-                await i.response.defer()
-                self2.view.selected_channel = int(self2.values[0])
-                self2.view.stop()
-        class ChannelDropdownView(ui.View):
-            def __init__(self, channels):
-                super().__init__(timeout=60)
-                self.selected_channel = None
-                self.add_item(ChannelDropdown(channels))
-        view = ChannelDropdownView(text_channels)
-        await interaction.response.send_message("Select a channel to send the announcement:", view=view, ephemeral=True)
-        await view.wait()
-        if not view.selected_channel:
-            await interaction.followup.send("❌ No channel selected. Announcement cancelled.", ephemeral=True)
-            return
-        channel_id = view.selected_channel
-        # Show modal for text and image URL
-        await interaction.followup.send_modal(AnnounceModal(self.bot, interaction, channel_id))
+
 
     # Prefix command: dmuser
     @commands.command(name="dmuser", description="DM a user with a custom message.")
