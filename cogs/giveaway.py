@@ -101,33 +101,31 @@ class Giveaway(commands.Cog):
     @commands.check(is_admin)
     async def giveaway(self, ctx):
         """Start a giveaway (admin/owner only)."""
-        def check(m):
-            return m.author == ctx.author and m.channel == ctx.channel
-        template = (
-            "**Please copy, fill, and send the following (all in one message):**\n"
-            "```\n1h GMT+5:30 | $10 Amazon Gift Card | 2\n```\n"
-            "Format: `<duration> | <prize> | <number of winners>`\n"
-            "- Example: `30m GMT-2 | Nitro Classic | 1`"
-        )
-        await ctx.send(template)
-        try:
-            msg = await self.bot.wait_for('message', check=check, timeout=120)
-        except asyncio.TimeoutError:
-            await ctx.send("❌ Timed out. Giveaway cancelled.")
-            return
-        parts = [p.strip() for p in msg.content.split('|')]
-        if len(parts) != 3:
-            await ctx.send("❌ Invalid format. Use: `<duration> | <prize> | <number of winners>`")
-            return
-        duration_str, prize, winners_str = parts
-        await run_giveaway(ctx, duration_str, prize, winners_str, ctx.author)
-
-    @app_commands.command(name="giveaway", description="Start a giveaway (admin/owner only)")
-    async def giveaway_slash(self, interaction: Interaction):
-        if not (interaction.user.id == OWNER_ID or interaction.user.guild_permissions.administrator):
-            await interaction.response.send_message("❌ This is an admin command only.", ephemeral=True)
-            return
-        await interaction.response.send_modal(GiveawayModal(self.bot, interaction))
+        if isinstance(ctx, discord.Interaction):
+            # Slash command - use modal
+            await ctx.response.send_modal(GiveawayModal(self.bot, ctx))
+        else:
+            # Prefix command - use interactive prompt
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+            template = (
+                "**Please copy, fill, and send the following (all in one message):**\n"
+                "```\n1h GMT+5:30 | $10 Amazon Gift Card | 2\n```\n"
+                "Format: `<duration> | <prize> | <number of winners>`\n"
+                "- Example: `30m GMT-2 | Nitro Classic | 1`"
+            )
+            await ctx.send(template)
+            try:
+                msg = await self.bot.wait_for('message', check=check, timeout=120)
+            except asyncio.TimeoutError:
+                await ctx.send("❌ Timed out. Giveaway cancelled.")
+                return
+            parts = [p.strip() for p in msg.content.split('|')]
+            if len(parts) != 3:
+                await ctx.send("❌ Invalid format. Use: `<duration> | <prize> | <number of winners>`")
+                return
+            duration_str, prize, winners_str = parts
+            await run_giveaway(ctx, duration_str, prize, winners_str, ctx.author)
 
 async def setup(bot):
     await bot.add_cog(Giveaway(bot)) 
