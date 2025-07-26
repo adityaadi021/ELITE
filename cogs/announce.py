@@ -136,7 +136,7 @@ class Announce(commands.Cog):
         self.bot = bot
 
     # Prefix command: announce
-    @commands.hybrid_command(name="announce", description="Send an announcement as an embed.")
+    @commands.command(name="announce", description="Send an announcement as an embed.")
     async def announce(self, ctx):
         if not await is_admin(ctx):
             await ctx.send("❌ You do not have permission to use this command.", reference=ctx.message, mention_author=True)
@@ -237,7 +237,7 @@ class Announce(commands.Cog):
         await interaction.followup.send_modal(AnnounceModal(self.bot, interaction, channel_id))
 
     # Prefix command: dmuser
-    @commands.hybrid_command(name="dmuser", description="DM a user with a custom message.")
+    @commands.command(name="dmuser", description="DM a user with a custom message.")
     async def dmuser(self, ctx, user: discord.User = None):
         if not await is_admin(ctx):
             await ctx.send("❌ You do not have permission to use this command.", reference=ctx.message, mention_author=True)
