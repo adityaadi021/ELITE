@@ -27,7 +27,7 @@ class Economy(commands.Cog):
         self.balances[user_id] += amount
         return self.balances[user_id]
 
-    @commands.hybrid_command(name="balance", description="Check your balance.")
+    @commands.command(name="balance", description="Check your balance.")
     async def balance(self, ctx):
         balance = self.get_balance(ctx.author.id)
         embed = modern_embed(
@@ -39,7 +39,7 @@ class Economy(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name="dailyreward", description="Claim your daily reward.")
+    @commands.command(name="dailyreward", description="Claim your daily reward.")
     async def daily(self, ctx):
         user_id = ctx.author.id
         now = datetime.now()
@@ -72,7 +72,7 @@ class Economy(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name="work", description="Work to earn coins.")
+    @commands.command(name="work", description="Work to earn coins.")
     async def work(self, ctx):
         user_id = ctx.author.id
         earnings = random.randint(50, 200)
@@ -93,7 +93,7 @@ class Economy(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name="shop", description="View the shop.")
+    @commands.command(name="shop", description="View the shop.")
     async def shop(self, ctx):
         items_text = ""
         for item_id, item in self.shop_items.items():
@@ -108,7 +108,7 @@ class Economy(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name="buy", description="Buy an item from the shop.")
+    @commands.command(name="buy", description="Buy an item from the shop.")
     async def buy(self, ctx, item: str):
         item = item.lower()
         if item not in self.shop_items:
