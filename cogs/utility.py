@@ -28,7 +28,7 @@ class Utility(commands.Cog):
         self.bot = bot
         self.afk_status = {}  # user_id: (message, timestamp)
 
-    @commands.hybrid_command(description="Check the bot's latency.")
+    @commands.command(description="Check the bot's latency.")
     @commands.check(is_owner)
     async def ping(self, ctx):
         latency = round(self.bot.latency * 1000)
@@ -41,7 +41,7 @@ class Utility(commands.Cog):
         )
         await ctx.send(embed=embed, reference=getattr(ctx, 'message', None), mention_author=True)
 
-    @commands.hybrid_command(name="serverstat", description="Create or update a member count voice channel.")
+    @commands.command(name="serverstat", description="Create or update a member count voice channel.")
     @commands.check(is_owner)
     async def serverstat(self, ctx):
         guild = ctx.guild
@@ -82,7 +82,7 @@ class Utility(commands.Cog):
             emoji="✅"
         ), reference=getattr(ctx, 'message', None), mention_author=True)
 
-    @commands.hybrid_command(name="afk", description="Set your AFK status.")
+    @commands.command(name="afk", description="Set your AFK status.")
     async def afk(self, ctx, *, message: str = "AFK"):
         self.afk_status[ctx.author.id] = (message, datetime.utcnow())
         embed = modern_embed(
@@ -124,7 +124,7 @@ class Utility(commands.Cog):
         # Don't break other listeners
         # await self.bot.process_commands(message)  # Removed to prevent double replies
 
-    @commands.hybrid_command(name="poll", description="Create a poll.")
+    @commands.command(name="poll", description="Create a poll.")
     async def poll(self, ctx, *, question: str):
         view = PollView(question)
         await ctx.send(embed=modern_embed(title="📊 Poll", description=question, color=discord.Color.blurple(), ctx=ctx), view=view)
@@ -210,7 +210,7 @@ class RoleButton(ui.Button):
             await member.add_roles(self.role)
             await interaction.response.send_message(f"Added role {self.role.mention}!", ephemeral=True)
 
-    @commands.hybrid_command(name="rolesetup", description="Setup self-assignable roles (admin only).")
+    @commands.command(name="rolesetup", description="Setup self-assignable roles (admin only).")
     @commands.has_permissions(administrator=True)
     async def rolesetup(self, ctx, role1: discord.Role, role2: discord.Role = None, role3: discord.Role = None):
         roles = [role for role in [role1, role2, role3] if role]
@@ -221,7 +221,7 @@ class RoleButton(ui.Button):
         role_list = ", ".join(role.mention for role in roles)
         await ctx.send(embed=modern_embed(title="🎭 Role Setup", description=f"Self-assignable roles set: {role_list}", color=discord.Color.green(), ctx=ctx))
 
-    @commands.hybrid_command(name="rolemenu", description="Post a role menu for users to assign roles.")
+    @commands.command(name="rolemenu", description="Post a role menu for users to assign roles.")
     @commands.has_permissions(administrator=True)
     async def rolemenu(self, ctx):
         # In a real bot, fetch from DB. Here, use dummy roles.
